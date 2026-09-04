@@ -1,39 +1,40 @@
 # My Homelab
 
-This repository documents my personal homelab project.
+This repository documents my personal homelab built with an old Lenovo G480 laptop.
+
+The main purpose of this homelab is to learn Linux server administration, networking, Docker, Git, GitHub, and eventually CI/CD.
 
 ## Hardware
 
-- Lenovo G480
-- Intel Core i3-3110M
-- 4 GB RAM
-- 466 GB storage
+- Laptop: Lenovo G480
+- CPU: Intel Core i3-3110M
+- RAM: 4 GB DDR3
+- Storage: ~466 GB
+- GPU: NVIDIA GeForce 610M
 
 ## Operating System
 
 - Debian 13
+- Server/minimal installation
+- No desktop environment
 
-## Network
-
-- Server IP: 192.168.1.30
-
-## Services
+## Current Services
 
 - SSH
 - Docker
 - Nginx
 
-## Current Progress
+## Network
 
-- [x] Install Debian
-- [x] Configure static IP
-- [x] Install SSH
-- [x] Configure laptop lid behavior
-- [x] Install Docker
-- [x] Deploy Nginx
-- [x] Configure Docker bind mount
-- [ ] GitHub repository
-- [ ] PostgreSQL
-- [ ] Backup
-- [ ] Monitoring
-- [ ] CI/CD
+- Server IP: `192.168.1.30`
+- Gateway: `192.168.1.1`
+
+## Project Structure
+
+```text
+/homelab
+├── README.md
+└── nginx
+    ├── compose.yaml
+    └── html
+        └── index.html
