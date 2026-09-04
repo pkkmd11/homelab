@@ -38,3 +38,30 @@ The main purpose of this homelab is to learn Linux server administration, networ
     ├── compose.yaml
     └── html
         └── index.html
+
+## Architecture
+
+```text
+                    Home Network
+                         │
+                         │
+                  Router / Gateway
+                    192.168.1.1
+                         │
+                         │
+                 ┌───────┴───────┐
+                 │               │
+          Other Devices      Lenovo G480
+                              Debian 13
+                            192.168.1.30
+                                 │
+                         ┌───────┴───────┐
+                         │               │
+                       Docker           SSH
+                         │
+                       Nginx
+                         │
+                    Port 80 (HTTP)
+                         │
+                         ▼
+                  Web Browser
