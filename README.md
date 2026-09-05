@@ -65,3 +65,26 @@ The main purpose of this homelab is to learn Linux server administration, networ
                          │
                          ▼
                   Web Browser
+
+## Jellyfin Media Server
+
+Jellyfin is running on my Lenovo G480 as a Docker container.
+
+It provides a self-hosted media server that I can access from devices on my home network.
+
+### Jellyfin Configuration
+
+- Container: `jellyfin`
+- Port: `8096`
+- Web interface: `http://192.168.1.30:8096`
+- Docker Compose file: `jellyfin/compose.yaml`
+
+### Media Storage
+
+The media files are stored outside the Git repository:
+
+```text
+/media/
+├── movies/
+├── tv/
+└── music/
