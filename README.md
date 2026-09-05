@@ -23,6 +23,7 @@ The main purpose of this homelab is to learn Linux server administration, networ
 - SSH
 - Docker
 - Nginx
+- Jellyfin
 
 ## Network
 
