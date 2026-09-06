@@ -1,2 +1,5 @@
 # Jellyfin generated configuration and database
 jellyfin/config/
+
+# Jellyfin backup
+jellyfin-config-backup.tar.gz
