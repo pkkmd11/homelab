@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+        - name: jellyfin
+          image: jellyfin/jellyfin:preview
+          ports:
+            - containerPort: 8096
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+
+          volumeMounts:
+            - name: jellyfin-config
+              mountPath: /config
+
+            - name: movies
+              mountPath: /media/movies
+              readOnly: true
+
+            - name: tv
+              mountPath: /media/tv
+              readOnly: true
+
+            - name: music
+              mountPath: /media/music
+
+      volumes:
+        - name: jellyfin-config
+          hostPath:
+            path: /homelab/jellyfin/config
+            type: Directory
+
+        - name: movies
+          hostPath:
+            path: /media/movies
+            type: Directory
+
+        - name: tv
+          hostPath:
+            path: /media/tv
+            type: Directory
+
+        - name: music
+          hostPath:
+            path: /media/music
+            type: Directory
