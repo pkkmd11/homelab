@@ -24,7 +24,7 @@ spec:
               memory: 64Mi
             limits:
               cpu: 150m
-              memory: 512Mi
+              memory: 768Mi
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
