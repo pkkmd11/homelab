@@ -15,14 +15,46 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus:latest
+          image: prom/prometheus:v3.14.0
           args:
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.path=/prometheus
             - --storage.tsdb.retention.time=24h
             - --storage.tsdb.wal-compression
           ports:
-            - containerPort: 9090
+            - name: http
+              containerPort: 9090
+          # Gives Prometheus time to start before
+          # readiness/liveness checks begin.
+          startupProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+
+          # Pod receives traffic only when Prometheus
+          # is ready to serve requests.
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Restarts the container if Prometheus becomes
+          # unhealthy after it has started.
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+
           resources:
             requests:
               cpu: 50m
@@ -56,5 +88,6 @@ spec:
   selector:
     app: prometheus
   ports:
-    - port: 9090
+    - name: http
+      port: 9090
       targetPort: 9090

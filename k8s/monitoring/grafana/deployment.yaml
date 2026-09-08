@@ -15,9 +15,39 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: grafana/grafana:13.2.1
           ports:
-            - containerPort: 3000
+            - name: http
+              containerPort: 3000
+          # Gives Grafana enough time to initialize
+          # before Kubernetes performs normal health checks.
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+
+          # Grafana receives traffic only when
+          # its HTTP health endpoint reports healthy.
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Restarts Grafana if it becomes unhealthy
+          # after it has successfully started.
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
           resources:
             requests:
               cpu: 30m
@@ -44,5 +74,6 @@ spec:
   selector:
     app: grafana
   ports:
-    - port: 3000
+    - name: http
+      port: 3000
       targetPort: 3000
