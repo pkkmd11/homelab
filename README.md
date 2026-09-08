@@ -1,107 +1,340 @@
 # My Homelab
 
-This repository documents my personal homelab built with an old Lenovo G480 laptop.
+A personal homelab project built on an old Lenovo G480 laptop. I use this environment to learn and practice Linux system administration, networking, Docker, Kubernetes, storage, monitoring, Git, and infrastructure management.
 
-The main purpose of this homelab is to learn Linux server administration, networking, Docker, Kubernetes, Git, GitHub, and eventually monitoring and CI/CD.
+The project is intentionally lightweight because the server has only 4 GB of RAM.
 
-## Hardware
-
-* Laptop: Lenovo G480
-* CPU: Intel Core i3-3110M
-* RAM: 4 GB DDR3
-* Storage: ~466 GB
-* GPU: NVIDIA GeForce 610M
-
-## Operating System
-
-* Debian 13
-* Server/minimal installation
-* No desktop environment
-
-## Current Services
-
-* SSH
-* Docker
-* Jellyfin
-* Kubernetes (K3s)
-* Traefik
-
-## Network
-
-* Server IP: `192.168.1.30`
-* Gateway: `192.168.1.1`
-
-## Project Structure
-
-```text
-/homelab
-├── README.md
-├── .gitignore
-├── nginx
-│   ├── compose.yaml
-│   └── html
-│       └── index.html
-├── jellyfin
-│   └── compose.yaml
-└── k8s
-    └── nginx
-        ├── deployment.yaml
-        ├── service.yaml
-        └── ingress.yaml
-```
-
-## Architecture
+## 🖥️ Infrastructure
 
 ```text
                          Home Network
+                        192.168.1.0/24
                               │
+                              ▼
+                     Router / Gateway
+                        192.168.1.1
                               │
-                       Router / Gateway
-                         192.168.1.1
+                              ▼
+                     Lenovo G480 Laptop
+                        Debian 13
+                      192.168.1.30
                               │
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-       Other Devices                    Lenovo G480
-                                      Debian 13
-                                    192.168.1.30
-                                          │
-                       ┌──────────────────┼──────────────────┐
-                       │                  │                  │
-                      SSH               Docker           Kubernetes
-                    Port 22                │                  │
-                       │                Jellyfin              K3s
-                       │                Port 8096             │
-                       │                                     Traefik
-                       │                                       │
-                       │                                    Ingress
-                       │                                       │
-                       │                                   nginx.lab
-                       │                                       │
-                       │                               Nginx Service
-                       │                                       │
-                       │                                    Nginx Pod
-                       │
-                       ▼
-                  SSH Client
+                    ┌─────────┴─────────┐
+                    │                   │
+                   SSH              K3s Kubernetes
+                  Port 22                 │
+                                        ▼
+                                  Traefik Ingress
+                                        │
+              ┌─────────────────────────┼─────────────────────────┐
+              │                         │                         │
+              ▼                         ▼                         ▼
+         namespace: lab          namespace: jellyfin       namespace: monitoring
+              │                         │                         │
+              ▼                         ▼              ┌──────────┼──────────┐
+            Nginx                    Jellyfin           │          │          │
+              │                         │           Prometheus  Grafana  Exporters
+              ▼                         ▼
+         nginx.lab                jellyfin.lab
 ```
 
-## Jellyfin Media Server
+## 💻 Server Hardware
 
-Jellyfin is running on my Lenovo G480 as a Docker container.
+| Component | Specification       |
+| --------- | ------------------- |
+| Device    | Lenovo G480         |
+| CPU       | Intel Core i3-3110M |
+| RAM       | 4 GB DDR3           |
+| Storage   | ~466 GB             |
+| GPU       | NVIDIA GeForce 610M |
+| OS        | Debian 13 Minimal   |
+| Server IP | `192.168.1.30`      |
+| Gateway   | `192.168.1.1`       |
 
-It provides a self-hosted media server that I can access from devices on my home network.
+## 🌐 Network
 
-### Jellyfin Configuration
+My homelab uses the following local network:
 
-* Container: `jellyfin`
-* Port: `8096`
-* Web interface: `http://192.168.1.30:8096`
-* Docker Compose file: `jellyfin/compose.yaml`
+```text
+Network:       192.168.1.0/24
+Gateway:       192.168.1.1
+Homelab:       192.168.1.30
+```
 
-### Media Storage
+### Local Services
 
-The media files are stored outside the Git repository:
+| Service    | Address           |
+| ---------- | ----------------- |
+| Nginx      | `nginx.lab`       |
+| Jellyfin   | `jellyfin.lab`    |
+| Grafana    | `grafana.lab`     |
+| Prometheus | `prometheus.lab`  |
+| SSH        | `192.168.1.30:22` |
+
+## 🧰 Technology Stack
+
+| Technology         | Purpose                                  |
+| ------------------ | ---------------------------------------- |
+| Debian 13          | Server operating system                  |
+| SSH                | Remote server administration             |
+| Docker             | Containerization                         |
+| Docker Compose     | Running early services                   |
+| K3s                | Lightweight Kubernetes                   |
+| Traefik            | Kubernetes ingress                       |
+| Nginx              | Web server / test application            |
+| Jellyfin           | Media server                             |
+| Prometheus         | Metrics collection                       |
+| Grafana            | Monitoring dashboards                    |
+| Node Exporter      | Linux host metrics                       |
+| Kube State Metrics | Kubernetes resource metrics              |
+| Kubernetes PVC     | Persistent storage                       |
+| Git                | Version control                          |
+| GitHub             | Source code and configuration management |
+
+## ☸️ Kubernetes
+
+The current environment uses **K3s**, a lightweight Kubernetes distribution suitable for the limited hardware available.
+
+Kubernetes node:
+
+```text
+Node: debian
+Kubernetes: v1.36.4+k3s1
+```
+
+### Namespaces
+
+```text
+lab
+jellyfin
+monitoring
+```
+
+## 📁 Repository Structure
+
+```text
+homelab/
+├── .gitignore
+├── README.md
+│
+├── archive/
+│   └── docker/
+│       ├── jellyfin-compose.yaml
+│       ├── nginx-compose.yaml
+│       └── nginx-html/
+│           └── index.html
+│
+└── k8s/
+    ├── apps/
+    │   ├── jellyfin/
+    │   │   ├── deployment.yaml
+    │   │   ├── ingress.yaml
+    │   │   └── service.yaml
+    │   │
+    │   └── nginx/
+    │       ├── deployment.yaml
+    │       ├── ingress.yaml
+    │       └── service.yaml
+    │
+    ├── infrastructure/
+    │   └── storage/
+    │       ├── grafana-pvc.yaml
+    │       ├── jellyfin-pvc.yaml
+    │       └── prometheus-pvc.yaml
+    │
+    ├── monitoring/
+    │   ├── grafana/
+    │   │   ├── deployment.yaml
+    │   │   └── ingress.yaml
+    │   │
+    │   ├── kube-state-metrics/
+    │   │   └── deployment.yaml
+    │   │
+    │   ├── node-exporter/
+    │   │   └── daemonset.yaml
+    │   │
+    │   └── prometheus/
+    │       ├── configmap.yaml
+    │       ├── deployment.yaml
+    │       └── ingress.yaml
+    │
+    └── namespaces/
+        ├── jellyfin.yaml
+        ├── lab.yaml
+        └── monitoring.yaml
+```
+
+## 🌐 Traefik Ingress
+
+Traefik is used as the Kubernetes ingress controller.
+
+Current routes:
+
+```text
+nginx.lab
+    │
+    └──> Nginx Service
+
+jellyfin.lab
+    │
+    └──> Jellyfin Service :8096
+
+grafana.lab
+    │
+    └──> Grafana Service :3000
+
+prometheus.lab
+    │
+    └──> Prometheus Service :9090
+```
+
+This allows me to access services using hostnames instead of remembering different Kubernetes ports.
+
+## 🎬 Jellyfin
+
+Jellyfin runs inside the `jellyfin` namespace.
+
+Configuration:
+
+```text
+Namespace:  jellyfin
+Service:    jellyfin
+Port:       8096
+TargetPort: 8096
+NodePort:   30096
+```
+
+Kubernetes manifests:
+
+```text
+k8s/apps/jellyfin/
+├── deployment.yaml
+├── service.yaml
+└── ingress.yaml
+```
+
+The preferred access method is through the Traefik hostname:
+
+```text
+http://jellyfin.lab
+```
+
+The direct Kubernetes NodePort is:
+
+```text
+http://192.168.1.30:30096
+```
+
+## 📊 Monitoring
+
+The homelab includes a monitoring stack based on Prometheus and Grafana.
+
+```text
+                    ┌───────────────┐
+                    │   Prometheus  │
+                    │     :9090    │
+                    └───────┬───────┘
+                            │
+              ┌─────────────┼─────────────┐
+              │             │             │
+              ▼             ▼             ▼
+        Node Exporter   Kube State    Kubernetes
+          :9100         Metrics       Metrics
+                         :8080
+              │
+              ▼
+        Linux Host Metrics
+
+                    Prometheus
+                        │
+                        ▼
+                    Grafana
+                      :3000
+                        │
+                        ▼
+                 Monitoring Dashboard
+```
+
+### Prometheus
+
+Prometheus collects metrics from:
+
+* Node Exporter
+* Kube State Metrics
+* Kubernetes workloads
+
+Prometheus configuration is located at:
+
+```text
+k8s/monitoring/prometheus/
+├── configmap.yaml
+├── deployment.yaml
+└── ingress.yaml
+```
+
+Prometheus uses persistent storage:
+
+```text
+prometheus-data
+```
+
+The current configuration uses:
+
+```text
+Scrape interval: 15s
+Retention:       24h
+```
+
+The short retention period helps reduce disk usage on the small server.
+
+### Grafana
+
+Grafana is used to visualize Prometheus metrics.
+
+Configuration:
+
+```text
+k8s/monitoring/grafana/
+├── deployment.yaml
+└── ingress.yaml
+```
+
+Access:
+
+```text
+http://grafana.lab
+```
+
+Grafana uses persistent storage:
+
+```text
+grafana-data
+```
+
+## 📦 Persistent Storage
+
+Persistent storage is configured using Kubernetes PersistentVolumeClaims.
+
+```text
+k8s/infrastructure/storage/
+├── grafana-pvc.yaml
+├── jellyfin-pvc.yaml
+└── prometheus-pvc.yaml
+```
+
+Current PVCs:
+
+```text
+jellyfin-data
+prometheus-data
+grafana-data
+```
+
+Persistent storage is important because application data should survive pod restarts or recreation.
+
+Jellyfin media is kept outside the Git repository.
+
+Example:
 
 ```text
 /media/
@@ -110,145 +343,153 @@ The media files are stored outside the Git repository:
 └── music/
 ```
 
-The Jellyfin configuration is also excluded from Git because it contains generated configuration and database files.
+## 🐳 Docker
 
-## Kubernetes
+Docker was used during the earlier stage of the homelab project.
 
-Kubernetes is running using K3s because the Lenovo G480 has limited hardware resources.
-
-### Kubernetes Cluster
-
-* Distribution: K3s
-* Node: `debian`
-* Kubernetes version: `v1.36.4+k3s1`
-* Namespace: `lab`
-
-### Nginx Deployment
-
-I deployed Nginx inside Kubernetes to practice basic Kubernetes concepts.
-
-The Deployment is defined in:
+The original Docker Compose configurations are kept in:
 
 ```text
-k8s/nginx/deployment.yaml
+archive/docker/
 ```
-
-The Deployment creates an Nginx Pod using the `nginx:alpine` image.
-
-### Kubernetes Service
-
-The Nginx Pod is exposed internally using a ClusterIP Service.
-
-Configuration:
 
 ```text
-k8s/nginx/service.yaml
+archive/docker/
+├── jellyfin-compose.yaml
+├── nginx-compose.yaml
+└── nginx-html/
+    └── index.html
 ```
 
-Service:
+These files are archived because the current infrastructure is primarily Kubernetes-based.
 
-* Name: `lab-nginx-service`
-* Type: `ClusterIP`
-* Port: `80`
+## 🔐 Resource-Conscious Design
 
-The Service provides stable internal networking to the Nginx Pod.
+This server only has **4 GB RAM**, so resource usage is important.
 
-### Traefik Ingress
+Kubernetes workloads use CPU and memory requests/limits where appropriate.
 
-K3s includes Traefik as an Ingress controller.
+For example:
 
-I created an Ingress configuration in:
+```yaml
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+```
+
+The goal is to keep the infrastructure stable while still running useful services.
+
+## ❤️ Health Checks
+
+Important workloads use Kubernetes health probes.
+
+Health checks help Kubernetes determine whether an application is:
+
+* Running correctly
+* Ready to receive traffic
+* In need of restarting
+
+This is currently used for services such as Prometheus and Grafana.
+
+## 📌 Git and Configuration Management
+
+The homelab configuration is maintained with Git.
+
+Repository:
 
 ```text
-k8s/nginx/ingress.yaml
+https://github.com/pkkmd11/homelab
 ```
 
-The Ingress routes requests for:
+The goal is to keep infrastructure configuration version-controlled and reproducible.
 
-```text
-nginx.lab
+Typical workflow:
+
+```bash
+git status
+git add .
+git commit -m "describe the change"
+git push origin main
 ```
 
-to:
+## 🚀 Learning Goals
 
-```text
-lab-nginx-service:80
-```
+This homelab is mainly a learning environment.
 
-The local hostname `nginx.lab` is mapped to the server IP `192.168.1.30` on my Windows computer.
+Current learning areas include:
 
-The Nginx application can then be accessed from my local network using:
+* Linux server administration
+* SSH
+* Networking
+* Docker
+* Docker Compose
+* Kubernetes
+* K3s
+* Kubernetes namespaces
+* Services
+* Ingress
+* Traefik
+* Persistent storage
+* Monitoring
+* Prometheus
+* Grafana
+* Git and GitHub
+* Infrastructure organization
+* Resource management
+* Application deployment
 
-```text
-http://nginx.lab
-```
+## ✅ Completed
 
-### Kubernetes Architecture
-
-```text
-Windows PC
-    │
-    │ http://nginx.lab
-    ▼
-192.168.1.30
-    │
-    ▼
-  Traefik
-    │
-    ▼
-  Ingress
-    │
-    ▼
-lab-nginx-service
-    │
-    ▼
- Nginx Pod
-```
-
-## Git and GitHub
-
-The homelab configuration is managed with Git.
-
-The repository is hosted on GitHub.
-
-I use Git to track changes to configuration files and document the progress of the homelab.
-
-## Learning Goals
-
-My current learning goals are:
-
-1. Linux server administration
-2. Networking
-3. Docker and Docker Compose
-4. Kubernetes and K3s
-5. Kubernetes Services and Ingress
-6. Traefik
-7. Persistent storage
-8. Helm
-9. Server and Kubernetes monitoring
-10. Prometheus and Grafana
-11. CI/CD
-
-## Roadmap
-
-* [x] Install Debian server
+* [x] Install Debian 13 minimal server
 * [x] Configure static IP
 * [x] Configure SSH
 * [x] Install Docker
-* [x] Run Nginx with Docker Compose
-* [x] Run Jellyfin with Docker Compose
+* [x] Run applications with Docker Compose
 * [x] Create Git repository
-* [x] Push homelab configuration to GitHub
+* [x] Push infrastructure configuration to GitHub
 * [x] Install K3s
-* [x] Create Kubernetes namespace
-* [x] Deploy Nginx to Kubernetes
-* [x] Create Kubernetes Service
-* [x] Configure Traefik Ingress
-* [x] Configure local `nginx.lab` hostname
-* [ ] PersistentVolume
-* [ ] Helm
-* [ ] Kubernetes monitoring
-* [ ] Prometheus
-* [ ] Grafana
-* [ ] Alerts
-* [ ] CI/CD
+* [x] Create Kubernetes namespaces
+* [x] Deploy Nginx
+* [x] Configure Traefik ingress
+* [x] Deploy Jellyfin
+* [x] Configure Jellyfin persistent storage
+* [x] Deploy Prometheus
+* [x] Deploy Grafana
+* [x] Deploy Node Exporter
+* [x] Deploy Kube State Metrics
+* [x] Add persistent storage for Prometheus
+* [x] Add persistent storage for Grafana
+* [x] Add health probes
+* [x] Add CPU and memory requests/limits
+* [x] Pin monitoring container images
+* [x] Organize Kubernetes manifests
+
+## 🔜 Future Plans
+
+* [ ] Improve Grafana dashboards
+* [ ] Add useful Prometheus alerts
+* [ ] Improve backup strategy
+* [ ] Learn Helm
+* [ ] Add CI/CD
+* [ ] Improve Kubernetes security
+* [ ] Add more services
+* [ ] Document disaster recovery
+* [ ] Improve infrastructure automation
+
+## 🎯 Purpose
+
+This project is not designed to be a production enterprise environment.
+
+It is my personal learning lab where I can experiment with real infrastructure, make mistakes, troubleshoot problems, and improve my skills.
+
+The main goal is to build practical experience with **Linux, networking, containers, Kubernetes, monitoring, and software infrastructure** using hardware that I already have.
+
+---
+
+**Maintained by Phyo Kyaw Ko**
+
+GitHub: `https://github.com/pkkmd11`
